@@ -233,7 +233,7 @@ admin_password = ${data.aws_secretsmanager_secret_version.grafana_password.secre
 ;auto_assign_org = true
 
 # Default role new users will be automatically assigned (if disabled above is set to true)
-;auto_assign_org_role = Viewer
+auto_assign_org_role = Editor
 
 # Background text for the user field on the login page
 ;login_hint = email or username

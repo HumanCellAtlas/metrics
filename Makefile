@@ -3,7 +3,8 @@ CLUSTER=FarGate-cluster-$(APP_NAME)
 AWS_DEFAULT_REGION=$(shell aws configure get region)
 ACCOUNT_ID=$(shell aws sts get-caller-identity | jq -r .Account)
 TARGET_GROUP_ARN=$(shell aws elbv2 describe-target-groups | jq -r '.TargetGroups[] | select(.TargetGroupName == "$(APP_NAME)") | .TargetGroupArn')
-IMAGE_NAME=$(shell terraform output ecr_uri)
+GRAFANA_IMAGE_NAME=$(shell terraform output grafana_ecr_uri)
+ES_PROXY_IMAGE_NAME=$(shell terraform output es_proxy_ecr_uri)
 SUBNETS=$(shell terraform output subnets | tr '\n' ' ')
 SEC_GROUP=$(shell terraform output security_group)
 
@@ -40,63 +41,29 @@ clean:
 grafana.ini: target
 	terraform output grafana.ini > target/grafana.ini
 
-.PHONY: task.json
-task.json: target
-	terraform output task.json > target/task.json
-
 .PHONY: all.yaml
 all.yaml: target
 	terraform output all.yaml > target/all.yaml
 
+.PHONY: docker-compose.yml
+docker-compose.yml:
+	terraform output docker-compose.yml > docker-compose.yml
+
+.PHONY: ecs-params.yml
+ecs-params.yml:
+	terraform output ecs-params.yml > ecs-params.yml
+
 .PHONY: image
-image: grafana.ini all.yaml
+image:
 	docker build -t $(APP_NAME) .
+	docker pull gorillastack/aws-es-proxy:latest
 
 .PHONY: publish
 publish:
-	docker tag $(APP_NAME):latest $(IMAGE_NAME)
-	docker push $(IMAGE_NAME)
-
-.PHONY: service
-service: task.json
-	aws ecs register-task-definition \
-		--cli-input-json file://$(PWD)/target/task.json
-	aws ecs create-service \
-		--service-name $(APP_NAME) \
-		--desired-count 0 \
-		--cluster $(CLUSTER) \
-		--task-definition $(APP_NAME) \
-		--network-configuration "awsvpcConfiguration={subnets=[$(SUBNETS)],securityGroups=[$(SEC_GROUP)],assignPublicIp=ENABLED}" \
-		--load-balancers targetGroupArn=$(TARGET_GROUP_ARN),containerName=$(APP_NAME),containerPort=3000 \
-		--launch-type FARGATE
-
-.PHONY: deploy-service
-deploy-service:
-	aws ecs update-service \
-		--cluster $(CLUSTER) \
-		--service $(APP_NAME) \
-		--task-definition $(APP_NAME) \
-		--desired-count 1 \
-		--force-new-deployment
-
-.PHONY: scale-down-service
-scale-down-service:
-	aws ecs list-services \
-		--cluster $(CLUSTER) | \
-		jq -r .serviceArns[] | \
-		xargs aws ecs update-service --cluster $(CLUSTER) --desired-count 0 --service
-	aws ecs list-tasks \
-		--cluster $(CLUSTER) \
-		--family $(APP_NAME) | \
-		jq -r .taskArns[] | \
-		xargs aws ecs stop-task --cluster $(CLUSTER) --task
-
-.PHONY: delete-service
-delete-service: scale-down-service
-	aws ecs list-services \
-		--cluster $(CLUSTER) | \
-		jq -r .serviceArns[] | \
-		xargs aws ecs delete-service --cluster $(CLUSTER) --service
+	docker tag $(APP_NAME):latest $(GRAFANA_IMAGE_NAME)
+	docker push $(GRAFANA_IMAGE_NAME)
+	docker tag abutaha/aws-es-proxy:0.8 $(ES_PROXY_IMAGE_NAME)
+	docker push $(ES_PROXY_IMAGE_NAME)
 
 .PHONY: deploy
 deploy:
@@ -107,4 +74,11 @@ ifneq ($(shell cat .terraform/terraform.tfstate | jq -r '.backend.config.profile
 	rm -r .terraform
 	$(MAKE) init
 endif
-	make apply image publish scale-down-service deploy-service
+	make apply image publish
+	make all.yaml docker-compose.yml ecs-params.yml
+	ecs-cli compose \
+		--project-name grafana-new \
+		service up \
+		--create-log-groups \
+		--cluster-config $(APP_NAME) \
+		--force-deployment

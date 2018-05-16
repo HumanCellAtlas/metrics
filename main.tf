@@ -65,8 +65,47 @@ resource "aws_ecr_repository_policy" "grafana" {
 EOF
 }
 
-output "ecr_uri" {
+output "grafana_ecr_uri" {
   value = "${aws_ecr_repository.grafana.repository_url}"
+}
+
+resource "aws_ecr_repository" "es_proxy" {
+  name = "es-proxy"
+}
+
+resource "aws_ecr_repository_policy" "es_proxy" {
+  repository = "${aws_ecr_repository.es_proxy.name}"
+  policy = <<EOF
+{
+    "Version": "2008-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": [
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:PutImage",
+                "ecr:InitiateLayerUpload",
+                "ecr:UploadLayerPart",
+                "ecr:CompleteLayerUpload",
+                "ecr:DescribeRepositories",
+                "ecr:GetRepositoryPolicy",
+                "ecr:ListImages",
+                "ecr:DeleteRepository",
+                "ecr:BatchDeleteImage",
+                "ecr:SetRepositoryPolicy",
+                "ecr:DeleteRepositoryPolicy"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+output "es_proxy_ecr_uri" {
+  value = "${aws_ecr_repository.es_proxy.repository_url}"
 }
 
 ////
@@ -411,31 +450,14 @@ resource "aws_iam_role_policy" "grafana" {
             "Effect": "Allow",
             "Action": [
                 "logs:CreateLogStream",
-                "sts:AssumeRole",
-                "es:ESHttpHead",
-                "es:DescribeElasticsearchDomain",
-                "es:ESHttpGet",
-                "es:DescribeElasticsearchDomainConfig",
-                "es:ListTags",
-                "es:DescribeElasticsearchDomains",
-                "logs:PutLogEvents"
+                "logs:PutLogEvents",
+                "sts:AssumeRole"
             ],
             "Resource": [
                 "${aws_cloudwatch_log_group.ecs.arn}",
                 "arn:aws:logs:*:*:log-group:*:*:*",
-                "${aws_iam_role.grafana.arn}",
-                "arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/hca-logs"
+                "${aws_iam_role.grafana.arn}"
             ]
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "es:ListDomainNames",
-                "es:ListElasticsearchInstanceTypes",
-                "es:DescribeElasticsearchInstanceTypeLimits",
-                "es:ListElasticsearchVersions"
-            ],
-            "Resource": "*"
         },
         {
             "Effect": "Allow",
@@ -464,6 +486,30 @@ resource "aws_iam_policy" "grafana_datasource" {
             "Action": [
                 "cloudwatch:ListMetrics",
                 "cloudwatch:GetMetricStatistics"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "es:DescribeElasticsearchDomain",
+                "es:DescribeElasticsearchDomainConfig",
+                "es:DescribeElasticsearchDomains",
+                "es:ESHttpGet",
+                "es:ESHttpHead",
+                "es:ListTags"
+            ],
+            "Resource": [
+                "arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/hca-logs"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "es:ListDomainNames",
+                "es:ListElasticsearchInstanceTypes",
+                "es:DescribeElasticsearchInstanceTypeLimits",
+                "es:ListElasticsearchVersions"
             ],
             "Resource": "*"
         },
