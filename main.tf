@@ -111,56 +111,6 @@ output "es_proxy_ecr_uri" {
 ////
 // cluster
 //
-// https://github.com/terraform-providers/terraform-provider-aws/issues/3060
-//resource "aws_default_vpc" "default" {
-//  tags {
-//    Name = "Default VPC"
-//  }
-//}
-//
-//data "aws_subnet_ids" "default" {
-//  vpc_id = "${aws_default_vpc.default.id}"
-//}
-//
-//output "subnets" {
-//  value = ["${data.aws_subnet_ids.default.ids}"]
-//}
-//
-//data "aws_internet_gateway" "default" {
-//  filter {
-//    name = "attachment.vpc-id"
-//    values = ["${aws_default_vpc.default.id}"]
-//  }
-//}
-//
-//resource "aws_route_table" "private_route_table" {
-//  vpc_id = "${aws_default_vpc.default.id}"
-//  tags {
-//      Name = "Private route table"
-//  }
-//}
-//
-//resource "aws_route" "internet_access" {
-//  route_table_id = "${aws_default_vpc.default.default_route_table_id}"
-//  destination_cidr_block = "0.0.0.0/0"
-//  gateway_id = "${data.aws_internet_gateway.default.id}"
-//}
-//
-//resource "aws_route" "private_route" {
-//  route_table_id  = "${aws_route_table.private_route_table.id}"
-//  destination_cidr_block = "0.0.0.0/0"
-//  gateway_id = "${data.aws_internet_gateway.default.id}"
-//}
-//
-//resource "aws_route_table_association" "subnet0" {
-//  subnet_id = "${data.aws_subnet_ids.default.ids[0]}"
-//  route_table_id = "${aws_route_table.private_route_table.id}"
-//}
-//
-//resource "aws_route_table_association" "subnet1" {
-//  subnet_id = "${data.aws_subnet_ids.default.ids[1]}"
-//  route_table_id = "${aws_route_table.private_route_table.id}"
-//}
 
 resource "aws_vpc" "grafana" {
   cidr_block = "172.51.0.0/16"
