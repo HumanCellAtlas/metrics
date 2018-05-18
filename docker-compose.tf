@@ -6,7 +6,7 @@ output "docker-compose.yml" {
   value = <<EOF
 version: '2'
 services:
-  grafana-new:
+  grafana:
     image: ${aws_ecr_repository.grafana.repository_url}:latest
     ports:
       - "3000:3000"
