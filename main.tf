@@ -113,7 +113,7 @@ output "es_proxy_ecr_uri" {
 //
 
 resource "aws_vpc" "grafana" {
-  cidr_block = "172.51.0.0/16"
+  cidr_block = "172.25.0.0/16"
   enable_dns_support = true
   enable_dns_hostnames = true
 }
@@ -151,7 +151,7 @@ resource "aws_subnet" "grafana_subnet1" {
 }
 
 resource "aws_db_subnet_group" "grafana" {
-  name       = "main"
+  name       = "grafana"
   subnet_ids = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
 
   tags {
