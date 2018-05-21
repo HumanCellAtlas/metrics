@@ -66,12 +66,15 @@ docker-compose.yml:
 ecs-params.yml:
 	terraform output ecs-params.yml > ecs-params.yml
 
-.PHONY: image
-image: all.yaml grafana.ini
+.PHONY: plugin
+plugin:
 	rm -rf target/master.zip
 	rm -rf target/grafana-google-stackdriver-datasource-master
 	cd target && wget https://github.com/mtanda/grafana-google-stackdriver-datasource/archive/master.zip
 	cd target && unzip master.zip
+
+.PHONY: image
+image: all.yaml grafana.ini
 	docker build -t $(APP_NAME) .
 	docker pull gorillastack/aws-es-proxy:latest
 
@@ -103,5 +106,5 @@ ifneq ($(shell cat .terraform/terraform.tfstate | jq -r '.backend.config.profile
 	rm -rf .terraform
 	$(MAKE) init
 endif
-	make apply image publish
+	make apply plugin image publish
 	make docker-compose.yml ecs-params.yml deploy-app
