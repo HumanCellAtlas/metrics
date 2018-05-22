@@ -76,7 +76,7 @@ plugin:
 .PHONY: image
 image: all.yaml grafana.ini
 	docker build -t $(APP_NAME) .
-	docker pull gorillastack/aws-es-proxy:latest
+	docker pull abutaha/aws-es-proxy:0.8
 
 .PHONY: publish
 publish:
