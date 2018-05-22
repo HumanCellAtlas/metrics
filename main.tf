@@ -151,7 +151,7 @@ resource "aws_subnet" "grafana_subnet1" {
 }
 
 resource "aws_db_subnet_group" "grafana" {
-  name       = "grafana"
+  name       = "grapaha"
   subnet_ids = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
 
   tags {
