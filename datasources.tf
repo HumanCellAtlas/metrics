@@ -19,5 +19,33 @@ datasources:
   jsonData:
     interval: Daily
     timeField: "@timestamp"
+- name: upload-dev-db
+  type: postgres
+  url:  ${data.external.dev_secrets_processing.result.host}
+  database: ${data.external.dev_secrets_processing.result.db_name}
+  user: ${data.external.dev_secrets_processing.result.username}
+  secureJsonData:
+    password: ${data.external.dev_secrets_processing.result.password}
+  jsonData:
+    sslmode: "disable"
+- name: upload-integration-db
+  type: postgres
+  url:  ${data.external.integration_secrets_processing.result.host}
+  database: ${data.external.integration_secrets_processing.result.db_name}
+  user: ${data.external.integration_secrets_processing.result.username}
+  secureJsonData:
+    password: ${data.external.integration_secrets_processing.result.password}
+  jsonData:
+    sslmode: "disable"
+- name: upload-staging-db
+  type: postgres
+  url:  ${data.external.staging_secrets_processing.result.host}
+  database: ${data.external.staging_secrets_processing.result.db_name}
+  user: ${data.external.staging_secrets_processing.result.username}
+  secureJsonData:
+    password: ${data.external.staging_secrets_processing.result.password}
+  jsonData:
+    sslmode: "disable"
 EOF
+  depends_on = ["data.external.dev_secrets_processing", "data.external.integration_secrets_processing", "data.external.staging_secrets_processing"]
 }
