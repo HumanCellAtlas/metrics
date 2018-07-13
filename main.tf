@@ -537,7 +537,6 @@ resource "aws_iam_access_key" "grafana_datasource" {
   user = "${aws_iam_user.grafana_datasource.name}"
 }
 
-<<<<<<< HEAD
 // Upload database secrets
 
 data "aws_secretsmanager_secret" "dev_db_creds" {
