@@ -66,6 +66,10 @@ docker-compose.yml:
 ecs-params.yml:
 	terraform output ecs-params.yml > ecs-params.yml
 
+.PHONY: gcp-credentials.json
+gcp-credentials.json:
+	terraform output gcp_logs_datasource_credentials > target/gcp-credentials.json
+
 .PHONY: plugin
 plugin:
 	rm -rf target/master.zip
@@ -74,7 +78,7 @@ plugin:
 	cd target && unzip master.zip
 
 .PHONY: image
-image: all.yaml grafana.ini
+image: all.yaml grafana.ini gcp-credentials.json
 	docker build -t $(APP_NAME) .
 	docker pull abutaha/aws-es-proxy:0.8
 
@@ -103,8 +107,7 @@ ifeq ($(AWS_PROFILE),)
 	@echo "You must set AWS_PROFILE" && False
 endif
 ifneq ($(shell cat .terraform/terraform.tfstate | jq -r '.backend.config.profile'),$(AWS_PROFILE))
-	rm -rf .terraform
-	$(MAKE) init
+	$(MAKE) clean target init
 endif
 	make apply plugin image publish
 	make docker-compose.yml ecs-params.yml deploy-app

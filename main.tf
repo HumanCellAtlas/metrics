@@ -539,6 +539,7 @@ resource "aws_iam_access_key" "grafana_datasource" {
   user = "${aws_iam_user.grafana_datasource.name}"
 }
 
+<<<<<<< HEAD
 // Upload database secrets
 
 data "aws_secretsmanager_secret" "dev_db_creds" {
@@ -593,4 +594,17 @@ data "external" "staging_secrets_processing" {
     # to the external program as the data query.
     secret_string = "${data.aws_secretsmanager_secret_version.staging_db_creds.secret_string}"
  }
+}
+
+data "aws_secretsmanager_secret" "gcp_logs_datasource_credentials" {
+  name = "metrics/_/gcp_logs_datasource_credentials"
+}
+
+data "aws_secretsmanager_secret_version" "gcp_logs_datasource_credentials" {
+  secret_id = "${data.aws_secretsmanager_secret.gcp_logs_datasource_credentials.id}"
+  version_stage = "AWSCURRENT"
+}
+
+output "gcp_logs_datasource_credentials" {
+  value = "${data.aws_secretsmanager_secret_version.gcp_logs_datasource_credentials.secret_string}"
 }
