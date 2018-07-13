@@ -387,7 +387,7 @@ resource "aws_cloudwatch_log_group" "ecs" {
 
 // task executor role
 resource "aws_iam_role" "task_executor" {
-  name = "ecsTaskExecutionRole"
+  name = "metricsEcsTaskExecutionRole"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -407,15 +407,13 @@ resource "aws_iam_role" "task_executor" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "task_executor_ecs" {
-  name = "grafana-ecs"
-  roles = ["${aws_iam_role.task_executor.name}"]
+resource "aws_iam_role_policy_attachment" "task_executor_ecs" {
+  role = "${aws_iam_role.task_executor.name}"
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_iam_policy_attachment" "task_executor_ecr" {
-  name = "grafana-ecr"
-  roles = ["${aws_iam_role.task_executor.name}"]
+resource "aws_iam_role_policy_attachment" "task_executor_ecr" {
+  role = "${aws_iam_role.task_executor.name}"
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
