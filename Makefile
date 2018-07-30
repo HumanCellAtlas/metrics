@@ -109,5 +109,5 @@ endif
 ifneq ($(shell cat .terraform/terraform.tfstate | jq -r '.backend.config.profile'),$(AWS_PROFILE))
 	$(MAKE) clean target init
 endif
-	make apply plugin image publish
+	make target apply plugin image publish
 	make docker-compose.yml ecs-params.yml deploy-app
