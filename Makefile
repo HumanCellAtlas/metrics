@@ -1,8 +1,11 @@
 SHELL=/bin/bash
+
 APP_NAME=grafana
 CLUSTER=FarGate-cluster-$(APP_NAME)
-AWS_DEFAULT_REGION=$(shell aws configure get region)
+AWS_DEFAULT_REGION=us-east-1
 ACCOUNT_ID=$(shell aws sts get-caller-identity | jq -r .Account)
+CICD_ROLE=arn:aws:iam::$(ACCOUNT_ID):role/allspark-eks-node
+
 TARGET_GROUP_ARN=$(shell aws elbv2 describe-target-groups | jq -r '.TargetGroups[] | select(.TargetGroupName == "$(APP_NAME)") | .TargetGroupArn')
 GRAFANA_IMAGE_NAME=$(shell terraform output grafana_ecr_uri)
 ES_PROXY_IMAGE_NAME=$(shell terraform output es_proxy_ecr_uri)
@@ -22,20 +25,18 @@ init:
 		--region $(AWS_DEFAULT_REGION) \
 		--default-launch-type FARGATE \
 		--config-name $(APP_NAME)
-	@ecs-cli configure profile \
-		--profile-name $(AWS_PROFILE) \
-		--access-key $(shell python3 -c 'from boto3 import Session ; print(Session().get_credentials().get_frozen_credentials().access_key)') \
-		--secret-key $(shell python3 -c 'from boto3 import Session ; print(Session().get_credentials().get_frozen_credentials().secret_key)')
+	ecs-cli configure \
+		--cluster $(CLUSTER) \
+		--region $(AWS_DEFAULT_REGION)
 	terraform init \
 		-backend-config region=$(AWS_DEFAULT_REGION) \
 		-backend-config bucket=org-humancellatlas-${ACCOUNT_ID}-terraform \
-		-backend-config profile=$(AWS_PROFILE)
+		-backend-config $(shell [ -z $${AWS_PROFILE+x} ] && echo role_arn=$(CICD_ROLE) || echo profile=$(AWS_PROFILE))
 
 terraform-%:
 	terraform $(*) \
 		-var cluster=$(CLUSTER) \
 		-var aws_region=$(AWS_DEFAULT_REGION) \
-		-var aws_profile=$(AWS_PROFILE) \
 		$(TERRAFORM_OPTIONS)
 
 .PHONY: plan
@@ -102,16 +103,3 @@ deploy-app:
 		--target-group-arn $(TARGET_GROUP_ARN) \
 		--timeout 10.0 \
 		--force-deployment
-
-.PHONY: deploy
-deploy:
-ifeq ($(AWS_PROFILE),)
-	@echo "You must set AWS_PROFILE" && false
-endif
-ifneq ($(shell [ -f .terraform/terraform.tfstate ] && cat .terraform/terraform.tfstate | jq -r '.backend.config.profile'),$(AWS_PROFILE))
-	$(MAKE) clean target init
-endif
-	make target
-	TERRAFORM_OPTIONS=-auto-approve make apply
-	make plugin image publish
-	make docker-compose.yml ecs-params.yml deploy-app
