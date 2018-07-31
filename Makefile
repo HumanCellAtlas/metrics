@@ -100,6 +100,7 @@ deploy-app:
 		--container-name $(APP_NAME) \
 		--container-port 3000 \
 		--target-group-arn $(TARGET_GROUP_ARN) \
+		--timeout 10.0 \
 		--force-deployment
 
 .PHONY: deploy
