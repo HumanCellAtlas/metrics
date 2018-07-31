@@ -108,7 +108,7 @@ deploy:
 ifeq ($(AWS_PROFILE),)
 	@echo "You must set AWS_PROFILE" && False
 endif
-ifneq ($(shell cat .terraform/terraform.tfstate | jq -r '.backend.config.profile'),$(AWS_PROFILE))
+ifneq ($(shell [ -f .terraform/terraform.tfstate ] && cat .terraform/terraform.tfstate | jq -r '.backend.config.profile'),$(AWS_PROFILE))
 	$(MAKE) clean target init
 endif
 	make target
