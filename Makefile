@@ -35,7 +35,8 @@ terraform-%:
 	terraform $(*) \
 		-var cluster=$(CLUSTER) \
 		-var aws_region=$(AWS_DEFAULT_REGION) \
-		-var aws_profile=$(AWS_PROFILE)
+		-var aws_profile=$(AWS_PROFILE) \
+		$(TERRAFORM_OPTIONS)
 
 .PHONY: plan
 plan: terraform-plan
@@ -109,5 +110,7 @@ endif
 ifneq ($(shell cat .terraform/terraform.tfstate | jq -r '.backend.config.profile'),$(AWS_PROFILE))
 	$(MAKE) clean target init
 endif
-	make target apply plugin image publish
+	make target
+	TERRAFORM_OPTIONS=-auto-approve make apply
+	make plugin image publish
 	make docker-compose.yml ecs-params.yml deploy-app
