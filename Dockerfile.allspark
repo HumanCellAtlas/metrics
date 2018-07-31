@@ -1,0 +1,59 @@
+# This is the build image for the DSS, intended for use with the allspark GitLab server
+# It may be built and uploaded with the commands:
+#   `docker login
+#   `docker build -f Dockerfile.allspark -t {docker_username}/{tag_key}:{tag_value} .`
+#   `docker push {docker_username}/{tag_key}:{tag_value}`
+# Note that `{tag_value}` may be omitted:
+#   `docker login
+#   `docker build -f Dockerfile.allspark -t {docker_username}/{tag_key} .`
+#   `docker push {docker_username}/{tag_key}`
+#
+# Now reference the image in .gitlab-ci.yml with the line:
+#   `image: {docker_username}/{tag_key}:{tag_value}
+#
+# Please see Docker startup guide for additional info:
+#   https://docs.docker.com/get-started/ 
+
+FROM ubuntu:18.04
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update --quiet \
+    && apt-get install --assume-yes --no-install-recommends \
+        build-essential \
+        jq \
+        make \
+        moreutils \
+        python3-pip \
+        python3.6-dev \
+        curl \
+        unzip
+
+RUN apt-get update --quiet
+
+RUN python3 -m pip install --upgrade pip==10.0.1
+RUN python3 -m pip install virtualenv==16.0.0
+RUN ln -s /usr/bin/python3.6 /usr/bin/python
+RUN ln -s /usr/bin/pip3 /usr/bin/pip
+
+RUN useradd -d /home/hca_cicd -ms /bin/bash -g root -G sudo hca_cicd
+RUN mkdir /HumanCellAtlas && chown hca_cicd /HumanCellAtlas
+WORKDIR /home/hca_cicd
+
+ENV BIN_DIR /home/hca_cicd/bin
+ENV PATH ${BIN_DIR}:${PATH}
+RUN mkdir -p ${BIN_DIR}
+
+RUN curl \
+ https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip \
+ -o ./terraform_0.11.7_linux_amd64.zip \
+    && unzip terraform_0.11.7_linux_amd64.zip -d ${BIN_DIR} \
+    && chmod 755 "${BIN_DIR}/terraform"
+
+RUN curl \
+  -o ${BIN_DIR}/ecs-cli \
+  https://s3.amazonaws.com/amazon-ecs-cli/ecs-cli-linux-amd64-latest \
+    && chmod 755 "${BIN_DIR}/ecs-cli"
+
+USER hca_cicd
+
