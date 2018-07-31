@@ -106,7 +106,7 @@ deploy-app:
 .PHONY: deploy
 deploy:
 ifeq ($(AWS_PROFILE),)
-	@echo "You must set AWS_PROFILE" && False
+	@echo "You must set AWS_PROFILE" && false
 endif
 ifneq ($(shell [ -f .terraform/terraform.tfstate ] && cat .terraform/terraform.tfstate | jq -r '.backend.config.profile'),$(AWS_PROFILE))
 	$(MAKE) clean target init
