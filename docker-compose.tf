@@ -7,7 +7,7 @@ output "docker-compose.yml" {
 version: '2'
 services:
   grafana:
-    image: ${aws_ecr_repository.grafana.repository_url}:latest
+    image: ${aws_ecr_repository.grafana.repository_url}:${var.image_tag}
     ports:
       - "3000:3000"
     logging:
@@ -17,7 +17,7 @@ services:
         awslogs-region: ${var.aws_region}
         awslogs-stream-prefix: grafana
   es-proxy:
-    image: ${aws_ecr_repository.es_proxy.repository_url}:latest
+    image: ${aws_ecr_repository.es_proxy.repository_url}:${var.image_tag}
     environment:
       - AWS_ACCESS_KEY_ID=${aws_iam_access_key.grafana_datasource.id}
       - AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.grafana_datasource.secret}

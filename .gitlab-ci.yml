@@ -19,6 +19,9 @@ variables:
   # improved performance.
   DOCKER_DRIVER: overlay2
 
+before_script:
+  - export IMAGE_TAG=${CI_BUILD_REF_NAME}-$(git describe --tags --always)-$CI_BUILD_ID
+
 services:
   - docker:dind
 
