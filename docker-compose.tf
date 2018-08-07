@@ -46,8 +46,8 @@ run_params:
   network_configuration:
     awsvpc_configuration:
       subnets:
-        - "${data.aws_subnet_ids.default.ids[0]}"
-        - "${data.aws_subnet_ids.default.ids[1]}"
+        - "${aws_subnet.grafana_subnet0.id}"
+        - "${aws_subnet.grafana_subnet1.id}"
       security_groups:
         - "${aws_security_group.grafana.id}"
       assign_public_ip: ENABLED

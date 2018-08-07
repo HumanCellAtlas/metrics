@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 provider "aws" {
   region = "${var.aws_region}"
-  profile = "${var.aws_profile}"
+  profile = "hca"
 }
 
 terraform {
@@ -182,16 +182,8 @@ resource "aws_route_table_association" "subnet1" {
   route_table_id = "${aws_route_table.private_route_table.id}"
 }
 
-data "aws_subnet_ids" "default" {
-  vpc_id = "${aws_vpc.grafana.id}"
-  depends_on = [
-    "aws_subnet.grafana_subnet0",
-    "aws_subnet.grafana_subnet1"
-  ]
-}
-
 output "subnets" {
-  value = ["${data.aws_subnet_ids.default.ids}"]
+  value = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
 }
 
 ////
@@ -291,7 +283,7 @@ resource "aws_security_group" "mysql" {
 
 resource "aws_lb" "grafana" {
   name = "grafana"
-  subnets = ["${data.aws_subnet_ids.default.ids}"]
+  subnets = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
   security_groups = ["${aws_security_group.grafana.id}"]
 }
 

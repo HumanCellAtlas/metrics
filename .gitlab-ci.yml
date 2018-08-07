@@ -1,5 +1,47 @@
-image: humancellatlas/metrics-build-box
+image: humancellatlas/metrics-build-box:latest
+
+variables:
+  ## variables for the build
+  AWS_DEFAULT_REGION: us-east-1
+  ## variables for docker
+  # When using dind service we need to instruct docker, to talk with the
+  # daemon started inside of the service. The daemon is available with
+  # a network connection instead of the default /var/run/docker.sock socket.
+  #
+  # The 'docker' hostname is the alias of the service container as described at
+  # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
+  #
+  # Note that if you're using Kubernetes executor, the variable should be set to
+  # tcp://localhost:2375 because of how Kubernetes executor connects services
+  # to the job container
+  DOCKER_HOST: tcp://localhost:2375/
+  # When using dind, it's wise to use the overlayfs driver for
+  # improved performance.
+  DOCKER_DRIVER: overlay2
+
+services:
+  - docker:dind
+
+stages:
+  - infra_build_publish
+  - deploy
+
+infra:
+  stage: infra_build_publish
+  script:
+    - TERRAFORM_OPTIONS=-detailed-exitcode make init plan
+
+build_publish:
+  stage: infra_build_publish
+  script:
+    - eval "$(aws ecr get-login --no-include-email)"
+    - make init target plugin image publish
 
 deploy:
+  stage: deploy
+  only:
+    refs:
+      - master
   script:
-    - make deploy
+    - make init terraform-refresh
+    - make docker-compose.yml ecs-params.yml deploy-app
