@@ -1,6 +1,6 @@
 # Metrics
 
-[![](https://allspark.dev.data.humancellatlas.org/HumanCellAtlas/metrics/badges/master/build.svg)](https://github.com/HumanCellAtlas/metrics)
+[![build status](https://allspark.dev.data.humancellatlas.org/HumanCellAtlas/metrics/badges/master/build.svg)](https://github.com/HumanCellAtlas/metrics)
 
 In order to be able to present metrics from HCA's different metrics systems side by side, we use the [Grafana](https://grafana.com/) metrics presentation layer.
 
