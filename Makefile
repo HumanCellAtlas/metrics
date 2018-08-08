@@ -37,6 +37,7 @@ terraform-%:
 	terraform $(*) \
 		-var cluster=$(CLUSTER) \
 		-var aws_region=$(AWS_DEFAULT_REGION) \
+		-var image_tag=$(IMAGE_TAG) \
 		$(TERRAFORM_OPTIONS)
 
 .PHONY: plan
@@ -81,15 +82,15 @@ plugin:
 
 .PHONY: image
 image: all.yaml grafana.ini gcp-credentials.json
-	docker build -t $(APP_NAME) .
+	docker build -t $(APP_NAME):$(IMAGE_TAG) .
 	docker pull abutaha/aws-es-proxy:0.8
 
 .PHONY: publish
 publish:
-	docker tag $(APP_NAME):latest $(GRAFANA_IMAGE_NAME)
-	docker push $(GRAFANA_IMAGE_NAME)
-	docker tag abutaha/aws-es-proxy:0.8 $(ES_PROXY_IMAGE_NAME)
-	docker push $(ES_PROXY_IMAGE_NAME)
+	docker tag $(APP_NAME):$(IMAGE_TAG) $(GRAFANA_IMAGE_NAME):$(IMAGE_TAG)
+	docker push $(GRAFANA_IMAGE_NAME):$(IMAGE_TAG)
+	docker tag abutaha/aws-es-proxy:0.8 $(ES_PROXY_IMAGE_NAME):$(IMAGE_TAG)
+	docker push $(ES_PROXY_IMAGE_NAME):$(IMAGE_TAG)
 
 .PHONY: deploy-app
 deploy-app:
