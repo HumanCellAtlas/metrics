@@ -102,5 +102,5 @@ deploy-app:
 		--container-name $(APP_NAME) \
 		--container-port 3000 \
 		--target-group-arn $(TARGET_GROUP_ARN) \
-		--timeout 10.0 \
+		--timeout 20.0 \
 		--force-deployment
