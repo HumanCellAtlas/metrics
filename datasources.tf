@@ -47,5 +47,9 @@ datasources:
   jsonData:
     sslmode: "disable"
 EOF
-  depends_on = ["data.external.dev_secrets_processing", "data.external.integration_secrets_processing", "data.external.staging_secrets_processing"]
+  depends_on = [
+    "data.external.dev_secrets_processing",
+    "data.external.integration_secrets_processing",
+    "data.external.staging_secrets_processing"
+  ]
 }
