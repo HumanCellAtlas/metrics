@@ -5,6 +5,9 @@ CLUSTER=FarGate-cluster-$(APP_NAME)
 AWS_DEFAULT_REGION=us-east-1
 ACCOUNT_ID=$(shell aws sts get-caller-identity | jq -r .Account)
 CICD_ROLE=arn:aws:iam::$(ACCOUNT_ID):role/allspark-eks-node
+ifeq ($(IMAGE_TAG),)
+IMAGE_TAG := latest
+endif
 
 TARGET_GROUP_ARN=$(shell aws elbv2 describe-target-groups | jq -r '.TargetGroups[] | select(.TargetGroupName == "$(APP_NAME)") | .TargetGroupArn')
 GRAFANA_IMAGE_NAME=$(shell terraform output grafana_ecr_uri)
