@@ -461,62 +461,6 @@ resource "aws_iam_role_policy" "grafana" {
 EOF
 }
 
-// Upload database secrets
-
-data "aws_secretsmanager_secret" "dev_db_creds" {
-  name = "dcp/upload/dev/database"
-}
-
-data "aws_secretsmanager_secret_version" "dev_db_creds" {
-  secret_id = "${data.aws_secretsmanager_secret.dev_db_creds.id}"
-}
-
-data "external" "dev_secrets_processing" {
-  program = ["python", "${path.root}/process_db_secrets.py"]
-
-  query = {
-    # arbitrary map from strings to strings, passed
-    # to the external program as the data query.
-    secret_string = "${data.aws_secretsmanager_secret_version.dev_db_creds.secret_string}"
- }
-}
-
-data "aws_secretsmanager_secret" "integration_db_creds" {
-  name = "dcp/upload/integration/database"
-}
-
-data "aws_secretsmanager_secret_version" "integration_db_creds" {
-  secret_id = "${data.aws_secretsmanager_secret.integration_db_creds.id}"
-}
-
-data "external" "integration_secrets_processing" {
-  program = ["python", "${path.root}/process_db_secrets.py"]
-
-  query = {
-    # arbitrary map from strings to strings, passed
-    # to the external program as the data query.
-    secret_string = "${data.aws_secretsmanager_secret_version.integration_db_creds.secret_string}"
- }
-}
-
-data "aws_secretsmanager_secret" "staging_db_creds" {
-  name = "dcp/upload/staging/database"
-}
-
-data "aws_secretsmanager_secret_version" "staging_db_creds" {
-  secret_id = "${data.aws_secretsmanager_secret.staging_db_creds.id}"
-}
-
-data "external" "staging_secrets_processing" {
-  program = ["python", "${path.root}/process_db_secrets.py"]
-
-  query = {
-    # arbitrary map from strings to strings, passed
-    # to the external program as the data query.
-    secret_string = "${data.aws_secretsmanager_secret_version.staging_db_creds.secret_string}"
- }
-}
-
 data "aws_secretsmanager_secret" "gcp_credentials" {
   name = "metrics/_/gcp_credentials"
 }

@@ -1,5 +1,5 @@
-data "external" "hca_logs" {
-  program = ["./search_domain.sh", "hca-logs"]
+data "external" "elasticsearch" {
+  program = ["./search_domain.sh", "${var.elasticsearch_domain}"]
 }
 
 output "docker-compose.yml" {
@@ -18,7 +18,7 @@ services:
         awslogs-stream-prefix: grafana
   es-proxy:
     image: ${aws_ecr_repository.es_proxy.repository_url}:${var.image_tag}
-    entrypoint: ./aws-es-proxy -verbose -listen 0.0.0.0:9200 -endpoint https://${data.external.hca_logs.result["endpoint"]}
+    entrypoint: ./aws-es-proxy -verbose -listen 0.0.0.0:9200 -endpoint https://${data.external.elasticsearch.result["endpoint"]}
     ports:
       - "9200:9200"
     logging:

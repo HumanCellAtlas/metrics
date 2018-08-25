@@ -41,6 +41,7 @@ terraform-%:
 		-var cluster=$(CLUSTER) \
 		-var aws_region=$(AWS_DEFAULT_REGION) \
 		-var image_tag=$(IMAGE_TAG) \
+		-var elasticsearch_domain=$(ELASTICSEARCH_DOMAIN) \
 		$(TERRAFORM_OPTIONS)
 
 .PHONY: plan

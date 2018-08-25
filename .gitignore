@@ -121,3 +121,4 @@ dcp.json
 dss.json
 docker-compose.yml
 ecs-params.yml
+.DS_Store
