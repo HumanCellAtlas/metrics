@@ -9,6 +9,14 @@ The components in DCP generate metrics from heterogeneous metrics systems some o
 * AWS CloudWatch Metrics
 * GCP Monitoring
 
+## Manual Deploy
+
+```bash
+export AWS_PROFILE=<profile>
+eval "$(aws ecr get-login --no-include-email)"
+make clean init image publish deploy-app
+```
+
 ## Deployments
 Grafana deployments are divided by environment boundaries.
 
