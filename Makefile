@@ -70,7 +70,7 @@ ecs-params.yml:
 
 .PHONY: gcp-credentials.json
 gcp-credentials.json:
-	terraform output gcp_logs_datasource_credentials > target/gcp-credentials.json
+	terraform output gcp_credentials > target/gcp-credentials.json
 
 .PHONY: plugin
 plugin:
