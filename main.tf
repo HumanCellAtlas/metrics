@@ -461,74 +461,6 @@ resource "aws_iam_role_policy" "grafana" {
 EOF
 }
 
-resource "aws_iam_user" "grafana_datasource" {
-  name = "grafana-datasource"
-}
-
-resource "aws_iam_policy" "grafana_datasource" {
-  name        = "grafana-datasource"
-  description = "Credentials for grafana to access CloudWatch Metrics and Logs ElasticSearch"
-  policy      =  <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "AllowReadingMetricsFromCloudWatch",
-            "Effect": "Allow",
-            "Action": [
-                "cloudwatch:ListMetrics",
-                "cloudwatch:GetMetricStatistics"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "es:DescribeElasticsearchDomain",
-                "es:DescribeElasticsearchDomainConfig",
-                "es:DescribeElasticsearchDomains",
-                "es:ESHttpGet",
-                "es:ESHttpHead",
-                "es:ListTags"
-            ],
-            "Resource": [
-                "arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/hca-logs"
-            ]
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "es:ListDomainNames",
-                "es:ListElasticsearchInstanceTypes",
-                "es:DescribeElasticsearchInstanceTypeLimits",
-                "es:ListElasticsearchVersions"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "AllowReadingTagsFromEC2",
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeTags",
-                "ec2:DescribeInstances"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-EOF
-}
-
-resource "aws_iam_policy_attachment" "grafana_datasource" {
-  name       = "grafana-datasource"
-  users      = ["${aws_iam_user.grafana_datasource.name}"]
-  policy_arn = "${aws_iam_policy.grafana_datasource.arn}"
-}
-
-resource "aws_iam_access_key" "grafana_datasource" {
-  user = "${aws_iam_user.grafana_datasource.name}"
-}
-
 // Upload database secrets
 
 data "aws_secretsmanager_secret" "dev_db_creds" {
@@ -585,15 +517,15 @@ data "external" "staging_secrets_processing" {
  }
 }
 
-data "aws_secretsmanager_secret" "gcp_logs_datasource_credentials" {
-  name = "metrics/_/gcp_logs_datasource_credentials"
+data "aws_secretsmanager_secret" "gcp_credentials" {
+  name = "metrics/_/gcp_credentials"
 }
 
-data "aws_secretsmanager_secret_version" "gcp_logs_datasource_credentials" {
-  secret_id = "${data.aws_secretsmanager_secret.gcp_logs_datasource_credentials.id}"
+data "aws_secretsmanager_secret_version" "gcp_credentials" {
+  secret_id = "${data.aws_secretsmanager_secret.gcp_credentials.id}"
   version_stage = "AWSCURRENT"
 }
 
-output "gcp_logs_datasource_credentials" {
-  value = "${data.aws_secretsmanager_secret_version.gcp_logs_datasource_credentials.secret_string}"
+output "gcp_credentials" {
+  value = "${data.aws_secretsmanager_secret_version.gcp_credentials.secret_string}"
 }

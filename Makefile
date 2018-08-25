@@ -60,10 +60,6 @@ clean:
 grafana.ini: target
 	terraform output grafana.ini > target/grafana.ini
 
-.PHONY: all.yaml
-all.yaml: target
-	terraform output all.yaml > target/all.yaml
-
 .PHONY: docker-compose.yml
 docker-compose.yml:
 	terraform output docker-compose.yml > docker-compose.yml
@@ -84,7 +80,7 @@ plugin:
 	cd target && unzip master.zip
 
 .PHONY: image
-image: all.yaml grafana.ini gcp-credentials.json
+image: grafana.ini gcp-credentials.json
 	docker build -t $(APP_NAME):$(IMAGE_TAG) .
 	docker pull abutaha/aws-es-proxy:0.8
 
