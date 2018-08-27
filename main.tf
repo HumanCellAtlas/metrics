@@ -461,6 +461,66 @@ resource "aws_iam_role_policy" "grafana" {
 EOF
 }
 
+// Elasticsearch proxy access permissions
+resource "aws_iam_user" "grafana_elasticsearch_proxy" {
+  name = "grafana-elasticsearch-proxy"
+}
+
+ resource "aws_iam_policy" "grafana_elasticsearch_proxy" {
+  name        = "grafana-elasticsearch-proxy"
+  description = "Credentials for grafana to access Logs ElasticSearch"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "es:DescribeElasticsearchDomain",
+                "es:DescribeElasticsearchDomainConfig",
+                "es:DescribeElasticsearchDomains",
+                "es:ESHttpGet",
+                "es:ESHttpHead",
+                "es:ListTags"
+            ],
+            "Resource": [
+                "arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/${var.elasticsearch_domain}"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "es:ListDomainNames",
+                "es:ListElasticsearchInstanceTypes",
+                "es:DescribeElasticsearchInstanceTypeLimits",
+                "es:ListElasticsearchVersions"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowReadingTagsFromEC2",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeTags",
+                "ec2:DescribeInstances"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_user_policy_attachment" "grafana_elasticsearch_proxy" {
+  user       = "${aws_iam_user.grafana_elasticsearch_proxy.name}"
+  policy_arn = "${aws_iam_policy.grafana_elasticsearch_proxy.arn}"
+}
+
+resource "aws_iam_access_key" "grafana_elasticsearch_proxy" {
+  user = "${aws_iam_user.grafana_elasticsearch_proxy.name}"
+}
+
+// gcp credential storage
 data "aws_secretsmanager_secret" "gcp_credentials" {
   name = "metrics/_/gcp_credentials"
 }
