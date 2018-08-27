@@ -1,4 +1,4 @@
-FROM grafana/grafana:master
+FROM grafana/grafana:5.2.0
 
 ENV GOOGLE_APPLICATION_CREDENTIALS ${HOME}/gcp-credentials.json
 COPY target/gcp-credentials.json ${GOOGLE_APPLICATION_CREDENTIALS}
