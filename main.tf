@@ -462,6 +462,10 @@ EOF
 }
 
 // Elasticsearch proxy access permissions
+resource "aws_iam_user" "grafana_elasticsearch_proxy" {
+  name = "grafana-elasticsearch-proxy"
+}
+
  resource "aws_iam_policy" "grafana_elasticsearch_proxy" {
   name        = "grafana-elasticsearch-proxy"
   description = "Credentials for grafana to access Logs ElasticSearch"
@@ -507,9 +511,13 @@ EOF
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "grafana_elasticsearch_proxy" {
-  role       = "${aws_iam_role.grafana.name}"
+resource "aws_iam_user_policy_attachment" "grafana_elasticsearch_proxy" {
+  user       = "${aws_iam_user.grafana_elasticsearch_proxy.name}"
   policy_arn = "${aws_iam_policy.grafana_elasticsearch_proxy.arn}"
+}
+
+resource "aws_iam_access_key" "grafana_elasticsearch_proxy" {
+  user = "${aws_iam_user.grafana_elasticsearch_proxy.name}"
 }
 
 // gcp credential storage
