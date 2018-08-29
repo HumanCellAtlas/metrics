@@ -1,6 +1,6 @@
 # Metrics
 
-In order to be able to present metrics from HCA's different metrics systems side by side, we use the [Grafana](https://grafana.com/) metrics presentation layer.
+In order to present metrics from HCA's different metrics systems side by side, we use the [Grafana](https://grafana.com/) metrics presentation layer.
 
 ## Metrics Systems
 The components in DCP generate metrics from heterogeneous metrics systems some of which are listed below.
