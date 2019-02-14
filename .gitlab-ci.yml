@@ -24,22 +24,17 @@ services:
 - docker:dind
 
 stages:
-- infra_build_publish
+- image
 - deploy
 
 before_script:
   - export IMAGE_TAG=${CI_BUILD_REF_NAME}-$(git describe --tags --always)-${CI_PIPELINE_ID}
   - eval "$(aws ecr get-login --no-include-email)"
 
-infra:
-  stage: infra_build_publish
-  script:
-    - TERRAFORM_OPTIONS=-detailed-exitcode make init plan
-
 build_publish:
-  stage: infra_build_publish
+  stage: image
   script:
-    - make init target plugin image publish
+    - make init target image publish
 
 deploy:
   stage: deploy
@@ -47,5 +42,4 @@ deploy:
     refs:
       - master
   script:
-    - make init terraform-refresh
-    - make docker-compose.yml ecs-params.yml deploy-app
+    - make init apply
