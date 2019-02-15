@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 provider "aws" {
   region = "${var.aws_region}"
-  profile = "hca"
+  profile = "${var.aws_profile}"
 }
 
 terraform {
@@ -10,6 +10,10 @@ terraform {
     key = "metrics/app.tfstate"
   }
 }
+
+////
+// secrets
+//
 
 data "aws_secretsmanager_secret" "domain_name" {
   name = "metrics/_/domain_name"
@@ -29,7 +33,10 @@ data "aws_secretsmanager_secret_version" "grafana_fqdn" {
   version_stage = "AWSCURRENT"
 }
 
+////
 // ECR
+//
+
 resource "aws_ecr_repository" "grafana" {
   name = "grafana"
 }
@@ -69,47 +76,8 @@ output "grafana_ecr_uri" {
   value = "${aws_ecr_repository.grafana.repository_url}"
 }
 
-resource "aws_ecr_repository" "es_proxy" {
-  name = "es-proxy"
-}
-
-resource "aws_ecr_repository_policy" "es_proxy" {
-  repository = "${aws_ecr_repository.es_proxy.name}"
-  policy = <<EOF
-{
-    "Version": "2008-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": [
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:BatchGetImage",
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:PutImage",
-                "ecr:InitiateLayerUpload",
-                "ecr:UploadLayerPart",
-                "ecr:CompleteLayerUpload",
-                "ecr:DescribeRepositories",
-                "ecr:GetRepositoryPolicy",
-                "ecr:ListImages",
-                "ecr:DeleteRepository",
-                "ecr:BatchDeleteImage",
-                "ecr:SetRepositoryPolicy",
-                "ecr:DeleteRepositoryPolicy"
-            ]
-        }
-    ]
-}
-EOF
-}
-
-output "es_proxy_ecr_uri" {
-  value = "${aws_ecr_repository.es_proxy.repository_url}"
-}
-
 ////
-// cluster
+// vpc
 //
 
 resource "aws_vpc" "grafana" {
@@ -182,16 +150,12 @@ resource "aws_route_table_association" "subnet1" {
   route_table_id = "${aws_route_table.private_route_table.id}"
 }
 
-output "subnets" {
-  value = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
-}
-
 ////
 // ecs
 //
 
 resource "aws_ecs_cluster" "fargate" {
-  name = "${var.cluster}"
+  name = "FarGate-cluster-grafana"
 }
 
 ////
@@ -301,10 +265,6 @@ resource "aws_lb_target_group" "grafana" {
   }
 }
 
-output "target_group_arn" {
-  value = "${aws_lb_target_group.grafana.arn}"
-}
-
 resource "aws_lb_listener" "grafana_https" {
   load_balancer_arn = "${aws_lb.grafana.arn}"
   protocol = "HTTPS"
@@ -315,15 +275,6 @@ resource "aws_lb_listener" "grafana_https" {
     type = "forward"
   }
 }
-
-output "security_group" {
-  value = "${aws_security_group.grafana.id}"
-}
-
-output "lb_name" {
-  value = "${aws_lb.grafana.name}"
-}
-
 
 ////
 // database
@@ -361,10 +312,6 @@ resource "aws_db_instance" "grafana" {
   parameter_group_name = "default.mysql5.7"
   apply_immediately = true
   publicly_accessible = false
-}
-
-output "mysql_endpoint" {
-  value = "${aws_db_instance.grafana.endpoint}"
 }
 
 ////
@@ -520,16 +467,115 @@ resource "aws_iam_access_key" "grafana_elasticsearch_proxy" {
   user = "${aws_iam_user.grafana_elasticsearch_proxy.name}"
 }
 
-// gcp credential storage
-data "aws_secretsmanager_secret" "gcp_credentials" {
-  name = "metrics/_/gcp_credentials"
+////
+// Task
+//
+
+data "external" "elasticsearch" {
+  program = ["bash", "es_hostname.sh", "${var.elasticsearch_domain}"]
 }
 
-data "aws_secretsmanager_secret_version" "gcp_credentials" {
-  secret_id = "${data.aws_secretsmanager_secret.gcp_credentials.id}"
-  version_stage = "AWSCURRENT"
+resource "aws_ecs_task_definition" "metrics" {
+  family = "grafana"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "512"
+  memory = "3072"
+  execution_role_arn = "${aws_iam_role.task_executor.arn}"
+
+  container_definitions = <<EOF
+[
+  {
+    "name": "es-proxy",
+    "image": "abutaha/aws-es-proxy:0.8",
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${aws_cloudwatch_log_group.ecs.name}",
+        "awslogs-region": "${var.aws_region}",
+        "awslogs-stream-prefix": "es-proxy"
+      }
+    },
+    "entryPoint": [
+      "./aws-es-proxy",
+      "-verbose",
+      "-listen",
+      "0.0.0.0:9200",
+      "-endpoint",
+      "http://${lookup(data.external.elasticsearch.result, "hostname")}"
+    ],
+    "portMappings": [
+      {
+        "hostPort": 9200,
+        "protocol": "tcp",
+        "containerPort": 9200
+      }
+    ],
+    "environment": [
+      {
+        "name": "AWS_ACCESS_KEY_ID",
+        "value": "${aws_iam_access_key.grafana_elasticsearch_proxy.id}"
+      },
+      {
+        "name": "AWS_SECRET_ACCESS_KEY",
+        "value": "${aws_iam_access_key.grafana_elasticsearch_proxy.secret}"
+      }
+    ],
+    "memory": 256,
+    "cpu": 256,
+    "essential": true,
+    "readonlyRootFilesystem": false,
+    "privileged": false
+  },
+  {
+    "name": "grafana",
+    "image": "${aws_ecr_repository.grafana.repository_url}:${var.image_tag}",
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${aws_cloudwatch_log_group.ecs.name}",
+        "awslogs-region": "${var.aws_region}",
+        "awslogs-stream-prefix": "grafana"
+      }
+    },
+    "entryPoint": [],
+    "portMappings": [
+      {
+        "hostPort": 3000,
+        "protocol": "tcp",
+        "containerPort": 3000
+      }
+    ],
+    "memory": 2048,
+    "cpu": 256,
+    "essential": true,
+    "readonlyRootFilesystem": false,
+    "privileged": false
+  }
+]
+EOF
 }
 
-output "gcp_credentials" {
-  value = "${data.aws_secretsmanager_secret_version.gcp_credentials.secret_string}"
+resource "aws_ecs_service" "metrics" {
+  name = "grafana"
+  cluster = "${aws_ecs_cluster.fargate.id}"
+  task_definition = "${aws_ecs_task_definition.metrics.arn}"
+  desired_count = 1
+  launch_type = "FARGATE"
+
+  network_configuration {
+    subnets = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
+    security_groups = ["${aws_security_group.grafana.id}"]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    container_name = "grafana"
+    container_port = "3000"
+    target_group_arn = "${aws_lb_target_group.grafana.arn}"
+  }
+}
+
+output "task_definition" {
+  value = "${aws_ecs_task_definition.metrics.family}:${aws_ecs_task_definition.metrics.revision}"
 }

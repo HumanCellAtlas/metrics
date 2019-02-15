@@ -13,10 +13,10 @@ The components in DCP generate metrics from heterogeneous metrics systems some o
 
 ```bash
 export AWS_PROFILE=<profile>
+export AWS_DEFAULT_REGION=<region>
 export ELASTICSEARCH_DOMAIN=<domain>
-make apply
 eval "$(aws ecr get-login --no-include-email)"
-make clean init image publish deploy-app
+make clean init image publish apply
 ```
 
 ## Deployments
