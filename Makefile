@@ -59,3 +59,7 @@ image: grafana.ini
 publish:
 	docker tag $(APP_NAME):$(IMAGE_TAG) $(GRAFANA_IMAGE_NAME):$(IMAGE_TAG)
 	docker push $(GRAFANA_IMAGE_NAME):$(IMAGE_TAG)
+
+.PHONY: deploy
+deploy:
+	TERRAFORM_OPTIONS=-auto-approve $(MAKE) terraform-apply

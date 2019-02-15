@@ -42,4 +42,4 @@ deploy:
     refs:
       - master
   script:
-    - make init apply
+    - make init deploy
