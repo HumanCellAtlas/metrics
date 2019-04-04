@@ -24,3 +24,7 @@ Grafana deployments are divided by environment boundaries.
 
 * https://metrics.dev.data.humancellatlas.org/ - consolidates metrics from our development accounts; spanning dev, integration, and staging environments
 * https://metrics.data.humancellatlas.org/ - consolidates metrics from our production accounts and production environment
+
+## Security
+
+**Please note**: If you believe you have found a security issue, _please responsibly disclose_ by contacting us at [security-leads@data.humancellatlas.org](mailto:security-leads@data.humancellatlas.org).
