@@ -63,3 +63,10 @@ publish:
 .PHONY: deploy
 deploy:
 	TERRAFORM_OPTIONS=-auto-approve $(MAKE) terraform-apply
+
+.PHONY: scale-down
+scale-down:
+	aws ecs update-service \
+		--cluster `terraform output cluster_name` \
+		--service grafana \
+		--desired-count 0

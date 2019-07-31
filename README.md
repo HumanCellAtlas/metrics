@@ -19,6 +19,12 @@ eval "$(aws ecr get-login --no-include-email)"
 make clean init image publish apply
 ```
 
+## Scale down
+
+```bash
+make scale-down
+```
+
 ## Deployments
 Grafana deployments are divided by environment boundaries.
 

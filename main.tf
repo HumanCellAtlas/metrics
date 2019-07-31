@@ -158,6 +158,10 @@ resource "aws_ecs_cluster" "fargate" {
   name = "FarGate-cluster-grafana"
 }
 
+output "cluster_name" {
+  value = "${aws_ecs_cluster.fargate.name}"
+}
+
 ////
 // DNS
 //
