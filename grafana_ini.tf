@@ -34,7 +34,7 @@ data "aws_secretsmanager_secret_version" "grafana_oauth2_client_secret" {
   version_stage = "AWSCURRENT"
 }
 
-output "grafana.ini" {
+output "grafana_ini" {
   value = <<EOF
 ##################### Grafana Configuration Example #####################
 #

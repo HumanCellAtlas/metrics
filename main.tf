@@ -89,7 +89,7 @@ resource "aws_vpc" "grafana" {
 resource "aws_internet_gateway" "gw" {
   vpc_id = "${aws_vpc.grafana.id}"
 
-  tags {
+  tags = {
     Name = "grafana"
   }
 }
@@ -122,14 +122,14 @@ resource "aws_db_subnet_group" "grafana" {
   name       = "grapaha"
   subnet_ids = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
 
-  tags {
+  tags = {
     Name = "My DB subnet group"
   }
 }
 
 resource "aws_route_table" "private_route_table" {
   vpc_id = "${aws_vpc.grafana.id}"
-  tags {
+  tags = {
       Name = "Private route table"
   }
 }

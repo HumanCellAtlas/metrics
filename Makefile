@@ -45,7 +45,7 @@ clean:
 
 .PHONY: grafana.ini
 grafana.ini: target
-	terraform output grafana.ini > target/grafana.ini
+	terraform output grafana_ini > target/grafana.ini
 
 .PHONY: container_definitions.json
 container_definitions.json: target
