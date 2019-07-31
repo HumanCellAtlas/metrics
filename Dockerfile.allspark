@@ -68,7 +68,7 @@ ENV PATH ${BIN_DIR}:${PATH}
 RUN mkdir -p ${BIN_DIR}
 
 RUN curl \
- https://releases.hashicorp.com/terraform/0.11.10/terraform_0.11.10_linux_amd64.zip \
+ https://releases.hashicorp.com/terraform/0.12.5/terraform_0.12.5_linux_amd64.zip \
  -o ./terraform_0.11.10_linux_amd64.zip \
     && unzip terraform_0.11.10_linux_amd64.zip -d ${BIN_DIR} \
     && chmod 755 "${BIN_DIR}/terraform"
