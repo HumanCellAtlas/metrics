@@ -31,6 +31,7 @@ before_script:
   - export IMAGE_TAG=${CI_BUILD_REF_NAME}-$(git describe --tags --always)-${CI_PIPELINE_ID}
   - export CICD_ROLE="arn:aws:iam::$(aws sts get-caller-identity | jq -r .Account):role/$(aws sts get-caller-identity | jq -r .Arn | cut -d/ -f2)"
   - eval "$(aws ecr get-login --no-include-email)"
+  - ./await_active_port.sh 2375
 
 build_publish:
   stage: image
