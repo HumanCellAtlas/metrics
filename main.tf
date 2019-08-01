@@ -39,6 +39,7 @@ data "aws_secretsmanager_secret_version" "grafana_fqdn" {
 
 resource "aws_ecr_repository" "grafana" {
   name = "grafana"
+  tags = "${local.common_tags}"
 }
 
 resource "aws_ecr_repository_policy" "grafana" {
@@ -84,14 +85,12 @@ resource "aws_vpc" "grafana" {
   cidr_block = "172.25.0.0/16"
   enable_dns_support = true
   enable_dns_hostnames = true
+  tags = "${local.common_tags}"
 }
 
 resource "aws_internet_gateway" "gw" {
   vpc_id = "${aws_vpc.grafana.id}"
-
-  tags = {
-    Name = "grafana"
-  }
+  tags = "${local.common_tags}"
 }
 
 resource "aws_route" "internet_access" {
@@ -107,6 +106,7 @@ resource "aws_subnet" "grafana_subnet0" {
   depends_on = [
     "aws_vpc.grafana"
   ]
+  tags = "${local.common_tags}"
 }
 
 resource "aws_subnet" "grafana_subnet1" {
@@ -116,22 +116,18 @@ resource "aws_subnet" "grafana_subnet1" {
   depends_on = [
     "aws_vpc.grafana"
   ]
+  tags = "${local.common_tags}"
 }
 
 resource "aws_db_subnet_group" "grafana" {
   name       = "grapaha"
   subnet_ids = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
-
-  tags = {
-    Name = "My DB subnet group"
-  }
+  tags = "${local.common_tags}"
 }
 
 resource "aws_route_table" "private_route_table" {
   vpc_id = "${aws_vpc.grafana.id}"
-  tags = {
-      Name = "Private route table"
-  }
+  tags = "${local.common_tags}"
 }
 
 resource "aws_route" "private_route" {
@@ -155,7 +151,8 @@ resource "aws_route_table_association" "subnet1" {
 //
 
 resource "aws_ecs_cluster" "fargate" {
-  name = "FarGate-cluster-grafana"
+  name = "metrics"
+  tags = "${local.common_tags}"
 }
 
 output "cluster_name" {
@@ -180,6 +177,7 @@ resource "aws_route53_record" "grafana" {
 resource "aws_acm_certificate" "cert" {
   domain_name = "${aws_route53_record.grafana.name}"
   validation_method = "DNS"
+  tags = "${local.common_tags}"
 }
 
 data "aws_route53_zone" "primary" {
@@ -228,6 +226,7 @@ resource "aws_security_group" "grafana" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = "${local.common_tags}"
 }
 
 resource "aws_security_group" "mysql" {
@@ -247,12 +246,14 @@ resource "aws_security_group" "mysql" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = "${local.common_tags}"
 }
 
 resource "aws_lb" "grafana" {
   name = "grafana"
   subnets = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
   security_groups = ["${aws_security_group.grafana.id}"]
+  tags = "${local.common_tags}"
 }
 
 resource "aws_lb_target_group" "grafana" {
@@ -267,6 +268,7 @@ resource "aws_lb_target_group" "grafana" {
     path = "/api/health"
     matcher = "200"
   }
+  tags = "${local.common_tags}"
 }
 
 resource "aws_lb_listener" "grafana_https" {
@@ -316,6 +318,7 @@ resource "aws_db_instance" "grafana" {
   parameter_group_name = "default.mysql5.7"
   apply_immediately = true
   publicly_accessible = false
+  tags = "${local.common_tags}"
 }
 
 ////
@@ -325,6 +328,7 @@ resource "aws_db_instance" "grafana" {
 resource "aws_cloudwatch_log_group" "ecs" {
   name = "/aws/ecs/metrics"
   retention_in_days = 1827
+  tags = "${local.common_tags}"
 }
 
 
@@ -558,6 +562,7 @@ resource "aws_ecs_task_definition" "metrics" {
   }
 ]
 EOF
+  tags = "${local.common_tags}"
 }
 
 resource "aws_ecs_service" "metrics" {
@@ -578,6 +583,7 @@ resource "aws_ecs_service" "metrics" {
     container_port = "3000"
     target_group_arn = "${aws_lb_target_group.grafana.arn}"
   }
+  tags = "${local.common_tags}"
 }
 
 output "task_definition" {
