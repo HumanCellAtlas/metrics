@@ -3,7 +3,6 @@ SHELL=/bin/bash
 APP_NAME=grafana
 AWS_DEFAULT_REGION=us-east-1
 ACCOUNT_ID=$(shell aws sts get-caller-identity | jq -r .Account)
-CICD_ROLE=arn:aws:iam::$(ACCOUNT_ID):role/allspark-eks-node
 ifeq ($(IMAGE_TAG),)
 IMAGE_TAG := latest
 endif

@@ -29,6 +29,7 @@ stages:
 
 before_script:
   - export IMAGE_TAG=${CI_BUILD_REF_NAME}-$(git describe --tags --always)-${CI_PIPELINE_ID}
+  - export CICD_ROLE=$(aws sts get-caller-identity | jq -r .Arn)
   - eval "$(aws ecr get-login --no-include-email)"
 
 build_publish:
