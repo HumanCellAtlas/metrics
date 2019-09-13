@@ -504,8 +504,7 @@ resource "aws_ecs_task_definition" "metrics" {
         "awslogs-stream-prefix": "es-proxy"
       }
     },
-    "entryPoint": [
-      "./aws-es-proxy",
+    "command": [
       "-verbose",
       "-listen",
       "0.0.0.0:9200",
