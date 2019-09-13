@@ -495,7 +495,7 @@ resource "aws_ecs_task_definition" "metrics" {
 [
   {
     "name": "es-proxy",
-    "image": "abutaha/aws-es-proxy:0.8",
+    "image": "abutaha/aws-es-proxy:0.9",
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
