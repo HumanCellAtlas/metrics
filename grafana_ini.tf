@@ -197,6 +197,8 @@ admin_password = ${data.aws_secretsmanager_secret_version.grafana_password.secre
 ;cookie_username = grafana_user
 ;cookie_remember_name = grafana_remember
 
+allow_embedding = true
+
 # disable gravatar profile images
 ;disable_gravatar = false
 
