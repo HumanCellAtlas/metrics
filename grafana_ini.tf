@@ -7,12 +7,12 @@ data "aws_secretsmanager_secret" "grafana_password" {
 }
 
 data "aws_secretsmanager_secret_version" "grafana_user" {
-  secret_id = "${data.aws_secretsmanager_secret.grafana_user.id}"
+  secret_id =  data.aws_secretsmanager_secret.grafana_user.id
   version_stage = "AWSCURRENT"
 }
 
 data "aws_secretsmanager_secret_version" "grafana_password" {
-  secret_id = "${data.aws_secretsmanager_secret.grafana_password.id}"
+  secret_id =  data.aws_secretsmanager_secret.grafana_password.id
   version_stage = "AWSCURRENT"
 }
 
@@ -25,12 +25,12 @@ data "aws_secretsmanager_secret" "grafana_oauth2_client_secret" {
 }
 
 data "aws_secretsmanager_secret_version" "grafana_oauth2_client_id" {
-  secret_id = "${data.aws_secretsmanager_secret.grafana_oauth2_client_id.id}"
+  secret_id =  data.aws_secretsmanager_secret.grafana_oauth2_client_id.id
   version_stage = "AWSCURRENT"
 }
 
 data "aws_secretsmanager_secret_version" "grafana_oauth2_client_secret" {
-  secret_id = "${data.aws_secretsmanager_secret.grafana_oauth2_client_secret.id}"
+  secret_id =  data.aws_secretsmanager_secret.grafana_oauth2_client_secret.id
   version_stage = "AWSCURRENT"
 }
 

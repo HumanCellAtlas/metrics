@@ -1,8 +1,8 @@
 data "aws_caller_identity" "current" {}
 
 provider "aws" {
-  region = "${var.aws_region}"
-  profile = "${var.aws_profile}"
+  region =  var.aws_region
+  profile =  var.aws_profile
 }
 
 terraform {
@@ -20,7 +20,7 @@ data "aws_secretsmanager_secret" "domain_name" {
 }
 
 data "aws_secretsmanager_secret_version" "domain_name" {
-  secret_id = "${data.aws_secretsmanager_secret.domain_name.id}"
+  secret_id =  data.aws_secretsmanager_secret.domain_name.id
   version_stage = "AWSCURRENT"
 }
 
@@ -29,7 +29,7 @@ data "aws_secretsmanager_secret" "grafana_fqdn" {
 }
 
 data "aws_secretsmanager_secret_version" "grafana_fqdn" {
-  secret_id = "${data.aws_secretsmanager_secret.grafana_fqdn.id}"
+  secret_id =  data.aws_secretsmanager_secret.grafana_fqdn.id
   version_stage = "AWSCURRENT"
 }
 
@@ -39,11 +39,11 @@ data "aws_secretsmanager_secret_version" "grafana_fqdn" {
 
 resource "aws_ecr_repository" "grafana" {
   name = "grafana"
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_ecr_repository_policy" "grafana" {
-  repository = "${aws_ecr_repository.grafana.name}"
+  repository =  aws_ecr_repository.grafana.name
   policy = <<EOF
 {
     "Version": "2008-10-17",
@@ -74,7 +74,7 @@ EOF
 }
 
 output "grafana_ecr_uri" {
-  value = "${aws_ecr_repository.grafana.repository_url}"
+  value =  aws_ecr_repository.grafana.repository_url
 }
 
 ////
@@ -85,65 +85,65 @@ resource "aws_vpc" "grafana" {
   cidr_block = "172.25.0.0/16"
   enable_dns_support = true
   enable_dns_hostnames = true
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = "${aws_vpc.grafana.id}"
-  tags = "${local.common_tags}"
+  vpc_id =  aws_vpc.grafana.id
+  tags =  local.common_tags
 }
 
 resource "aws_route" "internet_access" {
-  route_table_id = "${aws_vpc.grafana.main_route_table_id}"
+  route_table_id =  aws_vpc.grafana.main_route_table_id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id = "${aws_internet_gateway.gw.id}"
+  gateway_id =  aws_internet_gateway.gw.id
 }
 
 resource "aws_subnet" "grafana_subnet0" {
-  vpc_id            = "${aws_vpc.grafana.id}"
+  vpc_id            =  aws_vpc.grafana.id
   availability_zone = "${var.aws_region}a"
-  cidr_block        = "${cidrsubnet(aws_vpc.grafana.cidr_block, 8, 1)}"
+  cidr_block        =  cidrsubnet(aws_vpc.grafana.cidr_block, 8, 1)
   depends_on = [
     "aws_vpc.grafana"
   ]
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_subnet" "grafana_subnet1" {
-  vpc_id            = "${aws_vpc.grafana.id}"
+  vpc_id            =  aws_vpc.grafana.id
   availability_zone = "${var.aws_region}b"
-  cidr_block        = "${cidrsubnet(aws_vpc.grafana.cidr_block, 8, 2)}"
+  cidr_block        =  cidrsubnet(aws_vpc.grafana.cidr_block, 8, 2)
   depends_on = [
     "aws_vpc.grafana"
   ]
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_db_subnet_group" "grafana" {
   name       = "grapaha"
   subnet_ids = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_route_table" "private_route_table" {
-  vpc_id = "${aws_vpc.grafana.id}"
-  tags = "${local.common_tags}"
+  vpc_id =  aws_vpc.grafana.id
+  tags =  local.common_tags
 }
 
 resource "aws_route" "private_route" {
-  route_table_id  = "${aws_route_table.private_route_table.id}"
+  route_table_id  =  aws_route_table.private_route_table.id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id = "${aws_internet_gateway.gw.id}"
+  gateway_id =  aws_internet_gateway.gw.id
 }
 
 resource "aws_route_table_association" "subnet0" {
-  subnet_id = "${aws_subnet.grafana_subnet0.id}"
-  route_table_id = "${aws_route_table.private_route_table.id}"
+  subnet_id =  aws_subnet.grafana_subnet0.id
+  route_table_id =  aws_route_table.private_route_table.id
 }
 
 resource "aws_route_table_association" "subnet1" {
-  subnet_id = "${aws_subnet.grafana_subnet1.id}"
-  route_table_id = "${aws_route_table.private_route_table.id}"
+  subnet_id =  aws_subnet.grafana_subnet1.id
+  route_table_id =  aws_route_table.private_route_table.id
 }
 
 ////
@@ -152,11 +152,11 @@ resource "aws_route_table_association" "subnet1" {
 
 resource "aws_ecs_cluster" "fargate" {
   name = "metrics"
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 output "cluster_name" {
-  value = "${aws_ecs_cluster.fargate.name}"
+  value =  aws_ecs_cluster.fargate.name
 }
 
 ////
@@ -164,20 +164,20 @@ output "cluster_name" {
 //
 
 resource "aws_route53_record" "grafana" {
-  zone_id = "${data.aws_route53_zone.primary.zone_id}"
-  name = "${data.aws_secretsmanager_secret_version.grafana_fqdn.secret_string}"
+  zone_id =  data.aws_route53_zone.primary.zone_id
+  name =  data.aws_secretsmanager_secret_version.grafana_fqdn.secret_string
   type = "A"
   alias {
     evaluate_target_health = true
-    name = "${aws_lb.grafana.dns_name}"
-    zone_id = "${aws_lb.grafana.zone_id}"
+    name =  aws_lb.grafana.dns_name
+    zone_id =  aws_lb.grafana.zone_id
   }
 }
 
 resource "aws_acm_certificate" "cert" {
-  domain_name = "${aws_route53_record.grafana.name}"
+  domain_name =  aws_route53_record.grafana.name
   validation_method = "DNS"
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 data "aws_route53_zone" "primary" {
@@ -186,15 +186,15 @@ data "aws_route53_zone" "primary" {
 }
 
 resource "aws_route53_record" "cert_validation" {
-  name = "${aws_acm_certificate.cert.domain_validation_options.0.resource_record_name}"
-  type = "${aws_acm_certificate.cert.domain_validation_options.0.resource_record_type}"
-  zone_id = "${data.aws_route53_zone.primary.id}"
+  name =  aws_acm_certificate.cert.domain_validation_options.0.resource_record_name
+  type =  aws_acm_certificate.cert.domain_validation_options.0.resource_record_type
+  zone_id =  data.aws_route53_zone.primary.id
   records = ["${aws_acm_certificate.cert.domain_validation_options.0.resource_record_value}"]
   ttl = 60
 }
 
 resource "aws_acm_certificate_validation" "cert" {
-  certificate_arn = "${aws_acm_certificate.cert.arn}"
+  certificate_arn =  aws_acm_certificate.cert.arn
   validation_record_fqdns = ["${aws_route53_record.cert_validation.fqdn}"]
 }
 
@@ -204,7 +204,7 @@ resource "aws_acm_certificate_validation" "cert" {
 
 resource "aws_security_group" "grafana" {
   name = "grafana"
-  vpc_id = "${aws_vpc.grafana.id}"
+  vpc_id =  aws_vpc.grafana.id
 
   ingress {
     from_port   = 3000
@@ -226,12 +226,12 @@ resource "aws_security_group" "grafana" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_security_group" "mysql" {
   name = "grafana-mysql"
-  vpc_id = "${aws_vpc.grafana.id}"
+  vpc_id =  aws_vpc.grafana.id
 
   ingress {
     from_port   = 3306
@@ -246,21 +246,21 @@ resource "aws_security_group" "mysql" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_lb" "grafana" {
   name = "grafana"
   subnets = ["${aws_subnet.grafana_subnet0.id}", "${aws_subnet.grafana_subnet1.id}"]
   security_groups = ["${aws_security_group.grafana.id}"]
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_lb_target_group" "grafana" {
   name = "grafana"
   protocol = "HTTP"
   port = 3000
-  vpc_id = "${aws_vpc.grafana.id}"
+  vpc_id =  aws_vpc.grafana.id
   target_type = "ip"
   health_check {
     protocol = "HTTP"
@@ -268,16 +268,16 @@ resource "aws_lb_target_group" "grafana" {
     path = "/api/health"
     matcher = "200"
   }
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_lb_listener" "grafana_https" {
-  load_balancer_arn = "${aws_lb.grafana.arn}"
+  load_balancer_arn =  aws_lb.grafana.arn
   protocol = "HTTPS"
   port = 443
-  certificate_arn = "${aws_acm_certificate_validation.cert.certificate_arn}"
+  certificate_arn =  aws_acm_certificate_validation.cert.certificate_arn
   default_action {
-    target_group_arn = "${aws_lb_target_group.grafana.arn}"
+    target_group_arn =  aws_lb_target_group.grafana.arn
     type = "forward"
   }
 }
@@ -295,12 +295,12 @@ data "aws_secretsmanager_secret" "grafana_database_password" {
 }
 
 data "aws_secretsmanager_secret_version" "grafana_database_user" {
-  secret_id = "${data.aws_secretsmanager_secret.grafana_database_user.id}"
+  secret_id =  data.aws_secretsmanager_secret.grafana_database_user.id
   version_stage = "AWSCURRENT"
 }
 
 data "aws_secretsmanager_secret_version" "grafana_database_password" {
-  secret_id = "${data.aws_secretsmanager_secret.grafana_database_password.id}"
+  secret_id =  data.aws_secretsmanager_secret.grafana_database_password.id
   version_stage = "AWSCURRENT"
 }
 
@@ -311,14 +311,14 @@ resource "aws_db_instance" "grafana" {
   engine_version       = "5.7"
   instance_class       = "db.t2.micro"
   name                 = "grafana"
-  username             = "${data.aws_secretsmanager_secret_version.grafana_database_user.secret_string}"
-  password             = "${data.aws_secretsmanager_secret_version.grafana_database_password.secret_string}"
+  username             =  data.aws_secretsmanager_secret_version.grafana_database_user.secret_string
+  password             =  data.aws_secretsmanager_secret_version.grafana_database_password.secret_string
   vpc_security_group_ids = ["${aws_security_group.mysql.id}"]
-  db_subnet_group_name = "${aws_db_subnet_group.grafana.name}"
+  db_subnet_group_name =  aws_db_subnet_group.grafana.name
   parameter_group_name = "default.mysql5.7"
   apply_immediately = true
   publicly_accessible = false
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 ////
@@ -328,7 +328,7 @@ resource "aws_db_instance" "grafana" {
 resource "aws_cloudwatch_log_group" "ecs" {
   name = "/aws/ecs/metrics"
   retention_in_days = 1827
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 
@@ -355,12 +355,12 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "task_executor_ecs" {
-  role = "${aws_iam_role.task_executor.name}"
+  role =  aws_iam_role.task_executor.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 resource "aws_iam_role_policy_attachment" "task_executor_ecr" {
-  role = "${aws_iam_role.task_executor.name}"
+  role =  aws_iam_role.task_executor.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
@@ -388,7 +388,7 @@ EOF
 
 resource "aws_iam_role_policy" "grafana" {
   name = "grafana"
-  role = "${aws_iam_role.grafana.id}"
+  role =  aws_iam_role.grafana.id
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -467,12 +467,12 @@ EOF
 }
 
 resource "aws_iam_user_policy_attachment" "grafana_elasticsearch_proxy" {
-  user       = "${aws_iam_user.grafana_elasticsearch_proxy.name}"
-  policy_arn = "${aws_iam_policy.grafana_elasticsearch_proxy.arn}"
+  user       =  aws_iam_user.grafana_elasticsearch_proxy.name
+  policy_arn =  aws_iam_policy.grafana_elasticsearch_proxy.arn
 }
 
 resource "aws_iam_access_key" "grafana_elasticsearch_proxy" {
-  user = "${aws_iam_user.grafana_elasticsearch_proxy.name}"
+  user =  aws_iam_user.grafana_elasticsearch_proxy.name
 }
 
 ////
@@ -489,7 +489,7 @@ resource "aws_ecs_task_definition" "metrics" {
   network_mode = "awsvpc"
   cpu = "512"
   memory = "3072"
-  execution_role_arn = "${aws_iam_role.task_executor.arn}"
+  execution_role_arn =  aws_iam_role.task_executor.arn
 
   container_definitions = <<EOF
 [
@@ -561,13 +561,13 @@ resource "aws_ecs_task_definition" "metrics" {
   }
 ]
 EOF
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 resource "aws_ecs_service" "metrics" {
   name = "grafana"
-  cluster = "${aws_ecs_cluster.fargate.id}"
-  task_definition = "${aws_ecs_task_definition.metrics.arn}"
+  cluster =  aws_ecs_cluster.fargate.id
+  task_definition =  aws_ecs_task_definition.metrics.arn
   desired_count = 1
   launch_type = "FARGATE"
 
@@ -580,9 +580,9 @@ resource "aws_ecs_service" "metrics" {
   load_balancer {
     container_name = "grafana"
     container_port = "3000"
-    target_group_arn = "${aws_lb_target_group.grafana.arn}"
+    target_group_arn =  aws_lb_target_group.grafana.arn
   }
-  tags = "${local.common_tags}"
+  tags =  local.common_tags
 }
 
 output "task_definition" {
